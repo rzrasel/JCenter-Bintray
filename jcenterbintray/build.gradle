@@ -1,0 +1,140 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+android {
+    compileSdkVersion project.compileSdkVersion
+    buildToolsVersion project.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion project.minSdkVersion
+        targetSdkVersion project.targetSdkVersion
+        versionCode project.publishVersionCode
+        versionName project.publishVersionName
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        def date = new Date();
+        //def formattedDate = date.format('yyyyMMddHHmmss')
+        //android.defaultConfig.applicationId
+        def formattedDate = date.format('yyyyMMdd')
+        def apkName = project.APPName + ' - (' + android.defaultConfig.applicationId + ') ' + 'V-' + defaultConfig.versionName + ' - ' + formattedDate + ' '
+        setProperty("archivesBaseName", "$apkName")
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile "com.android.support:appcompat-v7:$project.googleAPIsVersion"
+    testCompile 'junit:junit:4.12'
+}
+
+def siteUrl = 'https://github.com/rzrasel/JCenter-Bintray'
+def gitUrl = 'https://github.com/rzrasel/JCenter-Bintray.git'
+
+
+group = 'com.rz'
+version = android.defaultConfig.versionName
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+
+    configurations = ['archives']
+
+    dryRun = false //Whether to run this as dry-run, without deploying
+    publish = true //If version should be auto published after an upload
+
+    pkg {
+        repo = 'maven'
+        name = 'JCenter Bintray'
+        desc = 'JCenter Bintray Android Test'
+        websiteUrl = siteUrl
+        issueTrackerUrl = 'https://github.com/rzrasel/JCenter-Bintray/issues'
+        vcsUrl = gitUrl
+        //licenses = ['MIT']
+        licenses = ['Apache-2.0']
+        labels = ['jcenterbintray','jcenter','bintray']
+        publicDownloadNumbers = true
+
+        version {
+            name = android.defaultConfig.versionName //Bintray logical version name
+            vcsTag = android.defaultConfig.versionName
+
+            gpg {
+                sign = true
+                passphrase = "$System.env.GPG_PASSPHRASE"
+            }
+
+            mavenCentralSync {
+                sync = true
+                //Optional (true by default). Determines whether to sync the version to Maven Central.
+                user = "$System.env.MAVEN_CENTRAL_USER_TOKEN" //OSS user token
+                password = "$System.env.MAVEN_CENTRAL_PASSWORD" //OSS user password
+                close = '1'
+                //Optional property. By default the staging repository is closed and artifacts are released to Maven Central. You can optionally turn this behaviour off (by puting 0 as value) and release the version manually.
+            }
+        }
+    }
+}
+
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                description 'JCenter Bintray Android Test'
+                packaging 'aar'
+                name 'JCenter Bintray'
+                url siteUrl
+                licenses {
+                    license {
+                        name 'The Apache License 2.0'
+                        url 'https://github.com/rzrasel/JCenter-Bintray/blob/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'bertrandmartel'
+                        name 'Bertrand Martel'
+                        email 'emailrzrasel@gmail.com'
+                    }
+                }
+                scm {
+                    connection 'https://github.com/rzrasel/JCenter-Bintray.git'
+                    developerConnection 'https://github.com/rzrasel/JCenter-Bintray.git'
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    failOnError false
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}

@@ -1,0 +1,39 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion project.compileSdkVersion
+    buildToolsVersion project.buildToolsVersion
+
+    defaultConfig {
+        applicationId "com.rz.jcenterbintrayone"
+        minSdkVersion project.minSdkVersion
+        targetSdkVersion project.targetSdkVersion
+        versionCode project.publishVersionCode
+        versionName project.publishVersionName
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        def date = new Date();
+        //def formattedDate = date.format('yyyyMMddHHmmss')
+        //android.defaultConfig.applicationId
+        def formattedDate = date.format('yyyyMMdd')
+        def apkName = project.APPName + ' - (' + applicationId + ') ' + 'V-' + defaultConfig.versionName + ' - ' + formattedDate + ' '
+        setProperty("archivesBaseName", "$apkName")
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile project(':jcenterbintray')
+    compile "com.android.support:appcompat-v7:$project.googleAPIsVersion"
+    testCompile 'junit:junit:4.12'
+}
